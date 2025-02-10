@@ -1,5 +1,6 @@
 #include "server.h"
 #include "constants.h"
+#include "http_parser.h"
 #include <arpa/inet.h>
 
 Server::Server(int port) : port(port), server_fd(-1) {}
@@ -56,17 +57,35 @@ void Server::run()
 
         std::cout << "Connection accepted from " << inet_ntoa(client_address.sin_addr) << std::endl;
 
-        // send a proper HTTP/1.1 response to the client
-        const std::string response =
-            "HTTP/1.1 200 OK\r\n"
-            "Content-Type: text/plain\r\n"
-            "Content-Length: 25\r\n"
-            "\r\n"
-            "Welcome to the server!\n";
+        char buffer[1024] = {0};
+        read(client_fd, buffer, sizeof(buffer));
 
-        send(client_fd, response.c_str(), response.size(), 0);
+        std::cout << "Received request: " << buffer << std::endl;
 
-        // close the connection
+        // parse the request
+        HttpRequest request;
+        if (request.parse(buffer))
+        {
+            HttpResponse response;
+            if (request.method == "GET" && request.path == "/")
+            {
+                response.status_code = 200;
+                response.status_message = "OK";
+                response.headers["Content-Type"] = "text/plain";
+                response.body = "Welcome to the server!";
+            }
+            else
+            {
+                response.status_code = 404;
+                response.status_message = "Not Found";
+                response.body = "Page not found";
+            }
+
+            // send the response to the client
+            std::string response_str = response.to_string();
+            send(client_fd, response_str.c_str(), response_str.size(), 0);
+        }
+
         close(client_fd);
     }
 }
