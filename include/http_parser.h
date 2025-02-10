@@ -5,6 +5,8 @@
 
 class HttpRequest
 {
+    std::string sanitize_string(const std::string &str);
+
 public:
     std::string method;
     std::string path;
