@@ -65,26 +65,30 @@ void Server::client_connection_handler()
     HttpRequest request;
     if (request.parse(buffer))
     {
-        HttpResponse response;
-        if (request.method == "GET" && request.path == "/")
-        {
-            response.status_code = 200;
-            response.status_message = "OK";
-            response.headers["Content-Type"] = "text/plain";
-            response.body = "Welcome to the server!";
-        }
-        else
-        {
-            response.status_code = 404;
-            response.status_message = "Not Found";
-            response.body = "Page not found";
-        }
+        // route the request to the appropriate handler
+        HttpResponse response = router.route(request);
 
         // send the response to the client
         std::string response_str = response.to_string();
         send(client_fd, response_str.c_str(), response_str.size(), 0);
     }
     close(client_fd);
+}
+
+void Server::register_routes()
+{
+    spdlog::info("Registering routes...");
+    // Example route
+    router.register_route(
+        "GET", "/", [](const HttpRequest &request) -> HttpResponse
+        {
+        HttpResponse response;
+        response.status_code = 200;
+        response.status_message = "OK";
+        response.body = "Hi to the server!";
+        return response; });
+
+    spdlog::info("Routes successfully registered");
 }
 
 void Server::run()
@@ -97,7 +101,11 @@ void Server::run()
 
 void Server::start()
 {
+    // setup the socket and register routes
     setup_socket();
+    register_routes();
+
+    // start the server
     run();
 }
 
