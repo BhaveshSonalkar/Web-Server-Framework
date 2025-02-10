@@ -2,6 +2,7 @@
 #include "constants.h"
 #include "http_parser.h"
 #include <arpa/inet.h>
+#include <spdlog/spdlog.h>
 
 Server::Server(int port) : port(port), server_fd(-1) {}
 
@@ -11,7 +12,7 @@ void Server::setup_socket()
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd < 0)
     {
-        perror("Error creating socket");
+        spdlog::error("Error creating socket: {}", strerror(errno));
         exit(EXIT_FAILURE);
     }
 
@@ -23,7 +24,7 @@ void Server::setup_socket()
     // bind the socket to the server address
     if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0)
     {
-        perror("Error binding socket");
+        spdlog::error("Error binding socket: {}", strerror(errno));
         close(server_fd);
         exit(EXIT_FAILURE);
     }
@@ -31,12 +32,12 @@ void Server::setup_socket()
     // start listening for incoming connections
     if (listen(server_fd, BACKLOG) < 0)
     {
-        perror("Error listening for connections");
+        spdlog::error("Error listening for connections: {}", strerror(errno));
         close(server_fd);
         exit(EXIT_FAILURE);
     }
 
-    std::cout << "Server is listening on port " << port << std::endl;
+    spdlog::info("Server is listening on port {}", port);
 }
 
 void Server::client_connection_handler()
@@ -49,16 +50,16 @@ void Server::client_connection_handler()
 
     if (client_fd < 0)
     {
-        perror("Error accepting connection");
+        spdlog::error("Error accepting connection: {}", strerror(errno));
         return;
     }
 
-    std::cout << "Connection accepted from " << inet_ntoa(client_address.sin_addr) << std::endl;
+    spdlog::info("Connection accepted from {}", inet_ntoa(client_address.sin_addr));
 
     char buffer[BUFFER_SIZE] = {0};
     read(client_fd, buffer, sizeof(buffer));
 
-    std::cout << "Received request: " << buffer << std::endl;
+    spdlog::info("Received request: {}", buffer);
 
     // parse the request
     HttpRequest request;
@@ -105,6 +106,6 @@ Server::~Server()
     if (server_fd != -1)
     {
         close(server_fd);
-        std::cout << "Server shut down" << std::endl;
+        spdlog::info("Server shut down");
     }
 }

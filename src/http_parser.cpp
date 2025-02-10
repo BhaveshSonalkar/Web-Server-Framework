@@ -1,6 +1,7 @@
 #include "http_parser.h"
 #include <sstream>
 #include <iostream>
+#include <spdlog/spdlog.h>
 
 std::string HttpRequest::sanitize_string(const std::string &str)
 {
@@ -30,6 +31,7 @@ bool HttpRequest::parse(const std::string &raw_request)
     */
     try
     {
+        spdlog::info("Starting to parse the HTTP request.");
         std::istringstream request_stream(raw_request);
         std::string line;
 
@@ -45,13 +47,14 @@ bool HttpRequest::parse(const std::string &raw_request)
             // Check if the HTTP version is valid
             if (http_version.substr(0, 5) != "HTTP/")
             {
-                std::cerr << "Invalid HTTP version: " << http_version << std::endl;
+                spdlog::error("Invalid HTTP version: {}", http_version);
                 return false;
             }
+            spdlog::info("Parsed request line: Method = {}, Path = {}, Version = {}", method, path, http_version);
         }
         else
         {
-            std::cerr << "Request line is missing" << std::endl;
+            spdlog::error("Request line is missing");
             return false;
         }
 
@@ -65,10 +68,11 @@ bool HttpRequest::parse(const std::string &raw_request)
                 std::string header_value = sanitize_string(line.substr(colon_pos + 1));
 
                 headers[header_name] = header_value;
+                spdlog::info("Parsed header: {} = {}", header_name, header_value);
             }
             else
             {
-                std::cerr << "Malformed header:" << line << std::endl;
+                spdlog::error("Malformed header: {}", line);
             }
         }
 
@@ -76,13 +80,15 @@ bool HttpRequest::parse(const std::string &raw_request)
         if (request_stream.rdbuf()->in_avail() > 0)
         {
             std::getline(request_stream, body, '\0');
+            spdlog::info("Parsed body: {}", body);
         }
 
+        spdlog::info("Finished parsing the HTTP request.");
         return true;
     }
     catch (const std::exception &e)
     {
-        std::cerr << "Error parsing request: " << e.what() << std::endl;
+        spdlog::error("Error parsing request: {}", e.what());
         return false;
     }
 }
@@ -110,7 +116,7 @@ std::string HttpResponse::to_string() const
     }
     catch (const std::exception &e)
     {
-        std::cerr << "Error converting response to string: " << e.what() << std::endl;
+        spdlog::error("Error converting response to string: {}", e.what());
         return "";
     }
 }
