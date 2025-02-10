@@ -55,7 +55,7 @@ void Server::client_connection_handler()
 
     std::cout << "Connection accepted from " << inet_ntoa(client_address.sin_addr) << std::endl;
 
-    char buffer[1024] = {0};
+    char buffer[BUFFER_SIZE] = {0};
     read(client_fd, buffer, sizeof(buffer));
 
     std::cout << "Received request: " << buffer << std::endl;
