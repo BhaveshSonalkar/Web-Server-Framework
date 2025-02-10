@@ -39,54 +39,58 @@ void Server::setup_socket()
     std::cout << "Server is listening on port " << port << std::endl;
 }
 
+void Server::client_connection_handler()
+{
+    struct sockaddr_in client_address;
+    socklen_t client_len = sizeof(client_address);
+
+    // accept an incoming connection
+    int client_fd = accept(server_fd, (struct sockaddr *)&client_address, &client_len);
+
+    if (client_fd < 0)
+    {
+        perror("Error accepting connection");
+        return;
+    }
+
+    std::cout << "Connection accepted from " << inet_ntoa(client_address.sin_addr) << std::endl;
+
+    char buffer[1024] = {0};
+    read(client_fd, buffer, sizeof(buffer));
+
+    std::cout << "Received request: " << buffer << std::endl;
+
+    // parse the request
+    HttpRequest request;
+    if (request.parse(buffer))
+    {
+        HttpResponse response;
+        if (request.method == "GET" && request.path == "/")
+        {
+            response.status_code = 200;
+            response.status_message = "OK";
+            response.headers["Content-Type"] = "text/plain";
+            response.body = "Welcome to the server!";
+        }
+        else
+        {
+            response.status_code = 404;
+            response.status_message = "Not Found";
+            response.body = "Page not found";
+        }
+
+        // send the response to the client
+        std::string response_str = response.to_string();
+        send(client_fd, response_str.c_str(), response_str.size(), 0);
+    }
+    close(client_fd);
+}
+
 void Server::run()
 {
     while (true)
     {
-        struct sockaddr_in client_address;
-        socklen_t client_len = sizeof(client_address);
-
-        // accept an incoming connection
-        int client_fd = accept(server_fd, (struct sockaddr *)&client_address, &client_len);
-
-        if (client_fd < 0)
-        {
-            perror("Error accepting connection");
-            continue;
-        }
-
-        std::cout << "Connection accepted from " << inet_ntoa(client_address.sin_addr) << std::endl;
-
-        char buffer[1024] = {0};
-        read(client_fd, buffer, sizeof(buffer));
-
-        std::cout << "Received request: " << buffer << std::endl;
-
-        // parse the request
-        HttpRequest request;
-        if (request.parse(buffer))
-        {
-            HttpResponse response;
-            if (request.method == "GET" && request.path == "/")
-            {
-                response.status_code = 200;
-                response.status_message = "OK";
-                response.headers["Content-Type"] = "text/plain";
-                response.body = "Welcome to the server!";
-            }
-            else
-            {
-                response.status_code = 404;
-                response.status_message = "Not Found";
-                response.body = "Page not found";
-            }
-
-            // send the response to the client
-            std::string response_str = response.to_string();
-            send(client_fd, response_str.c_str(), response_str.size(), 0);
-        }
-
-        close(client_fd);
+        client_connection_handler();
     }
 }
 

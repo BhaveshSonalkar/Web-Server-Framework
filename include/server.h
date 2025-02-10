@@ -18,6 +18,9 @@ private:
     // main loop to handle client connections
     void run();
 
+    // handle single client connection
+    void client_connection_handler();
+
 public:
     Server(int port);
     ~Server();
