@@ -6,6 +6,11 @@
 
 Server::Server(int port) : port(port), server_fd(-1) {}
 
+Router &Server::getRouter()
+{
+    return router;
+}
+
 void Server::setup_socket()
 {
     // create socket(IPv4, TCP
@@ -75,22 +80,6 @@ void Server::client_connection_handler()
     close(client_fd);
 }
 
-void Server::register_routes()
-{
-    spdlog::info("Registering routes...");
-    // Example route
-    router.register_route(
-        "GET", "/", [](const HttpRequest &request) -> HttpResponse
-        {
-        HttpResponse response;
-        response.status_code = 200;
-        response.status_message = "OK";
-        response.body = "Hi to the server!";
-        return response; });
-
-    spdlog::info("Routes successfully registered");
-}
-
 void Server::run()
 {
     while (true)
@@ -101,11 +90,8 @@ void Server::run()
 
 void Server::start()
 {
-    // setup the socket and register routes
+    // setup the socket
     setup_socket();
-    register_routes();
-
-    // start the server
     run();
 }
 

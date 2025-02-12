@@ -13,6 +13,9 @@ public:
     ~Server();
     void start();
 
+    // Expose the router for external route registration.
+    Router &getRouter();
+
 private:
     int server_fd;
     struct sockaddr_in address;
@@ -24,9 +27,6 @@ private:
 
     // main loop to handle client connections
     void run();
-
-    // register routes
-    void register_routes();
 
     // handle single client connection
     void client_connection_handler();
