@@ -18,10 +18,12 @@ void register_routes(Router &router)
 
     router.register_route("POST", "/submit", [](const HttpRequest &request) -> HttpResponse
                           {
+
+        std::string name = request.json_body["name"];
         HttpResponse response;
-        response.status_code = 200;
+        response.status_code = 200; 
         response.status_message = "OK";
-        response.body = "Post request received";
+        response.body = "Post request received, name: " + name;
         return response; });
     spdlog::info("Routes successfully registered");
 }

@@ -42,8 +42,20 @@ std::map<std::string, std::string> HttpRequest::parse_headers(std::istringstream
     */
     std::map<std::string, std::string> headers;
     std::string line;
-    while (std::getline(request_stream, line) && line != "\r")
+    while (std::getline(request_stream, line))
     {
+        // Trim trailing \r if present
+        if (!line.empty() && line.back() == '\r')
+        {
+            line.pop_back();
+        }
+
+        // Check for the end of headers
+        if (line.empty())
+        {
+            break;
+        }
+
         auto colon_pos = line.find(':');
         if (colon_pos != std::string::npos)
         {
