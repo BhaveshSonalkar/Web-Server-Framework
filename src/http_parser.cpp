@@ -3,6 +3,22 @@
 #include <iostream>
 #include <spdlog/spdlog.h>
 
+std::map<std::string, std::string> HttpRequest::parse_query_params(const std::string &query_string)
+{
+    /*
+    This function parses the query string and returns a map of key-value pairs.
+    */
+    std::map<std::string, std::string> params;
+    std::stringstream query_stream(query_string);
+    std::string key, value;
+
+    while (std::getline(query_stream, key, '=') && std::getline(query_stream, value, '&'))
+    {
+        params[key] = value;
+    }
+    return params;
+}
+
 std::string HttpRequest::sanitize_string(const std::string &str)
 {
     /*
@@ -43,6 +59,18 @@ bool HttpRequest::parse(const std::string &raw_request)
 
             std::string http_version;
             line_stream >> http_version;
+
+            // Check if the path contains query parameters
+            size_t question_mark_pos = path.find('?');
+            if (question_mark_pos != std::string::npos)
+            {
+                // Extract the base path and query parameters
+                std::string base_path = path.substr(0, question_mark_pos);
+                params = parse_query_params(path.substr(question_mark_pos + 1));
+
+                // Update the path with the base path
+                path = base_path;
+            }
 
             // Check if the HTTP version is valid
             if (http_version.substr(0, 5) != "HTTP/")
