@@ -9,8 +9,8 @@ void register_routes(Router &router)
     router.register_route("GET", "/", [](const HttpRequest &request) -> HttpResponse
                           {
         HttpResponse response;
-        std::string name = request.params.at("name");
-
+        auto params = request.params;
+        std::string name = params["name"];
         response.status_code = 200;
         response.status_message = "OK";
         response.body = "Get request received, name: " + name;
