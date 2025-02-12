@@ -19,6 +19,48 @@ std::map<std::string, std::string> HttpRequest::parse_query_params(const std::st
     return params;
 }
 
+nlohmann::json HttpRequest::parse_json_body() const
+{
+    /*
+    This function parses the JSON body and returns a nlohmann::json object.
+    */
+    try
+    {
+        return nlohmann::json::parse(body);
+    }
+    catch (const nlohmann::json::parse_error &e)
+    {
+        spdlog::error("Error parsing JSON body: {}", e.what());
+        return nlohmann::json();
+    }
+}
+
+std::map<std::string, std::string> HttpRequest::parse_headers(std::istringstream &request_stream)
+{
+    /*
+    This function parses the headers and returns a map of key-value pairs.
+    */
+    std::map<std::string, std::string> headers;
+    std::string line;
+    while (std::getline(request_stream, line) && line != "\r")
+    {
+        auto colon_pos = line.find(':');
+        if (colon_pos != std::string::npos)
+        {
+            std::string header_name = sanitize_string(line.substr(0, colon_pos));
+            std::string header_value = sanitize_string(line.substr(colon_pos + 1));
+
+            headers[header_name] = header_value;
+            spdlog::info("Parsed header: {} = {}", header_name, header_value);
+        }
+        else
+        {
+            spdlog::error("Malformed header: {}", line);
+        }
+    }
+    return headers;
+}
+
 std::string HttpRequest::sanitize_string(const std::string &str)
 {
     /*
@@ -87,28 +129,20 @@ bool HttpRequest::parse(const std::string &raw_request)
         }
 
         // Parse headers
-        while (std::getline(request_stream, line) && line != "\r")
-        {
-            auto colon_pos = line.find(':');
-            if (colon_pos != std::string::npos)
-            {
-                std::string header_name = sanitize_string(line.substr(0, colon_pos));
-                std::string header_value = sanitize_string(line.substr(colon_pos + 1));
-
-                headers[header_name] = header_value;
-                spdlog::info("Parsed header: {} = {}", header_name, header_value);
-            }
-            else
-            {
-                spdlog::error("Malformed header: {}", line);
-            }
-        }
+        headers = parse_headers(request_stream);
 
         // Parse body
         if (request_stream.rdbuf()->in_avail() > 0)
         {
             std::getline(request_stream, body, '\0');
             spdlog::info("Parsed body: {}", body);
+
+            // check if content type is application/json
+            auto it = headers.find("Content-Type");
+            if (it != headers.end() && it->second == "application/json")
+            {
+                json_body = parse_json_body();
+            }
         }
 
         spdlog::info("Finished parsing the HTTP request.");
