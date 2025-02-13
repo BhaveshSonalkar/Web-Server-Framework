@@ -63,7 +63,15 @@ void Server::client_connection_handler(int client_fd)
 
             // send the response to the client
             std::string response_str = response.to_string();
-            send(client_fd, response_str.c_str(), response_str.size(), 0);
+            ssize_t bytes_sent = send(client_fd, response_str.c_str(), response_str.size(), 0);
+            if (bytes_sent < 0)
+            {
+                spdlog::error("Error sending response: {}", strerror(errno));
+            }
+            else
+            {
+                spdlog::info("Response sent: {}", response_str);
+            }
         }
     }
     catch (const std::exception &e)
