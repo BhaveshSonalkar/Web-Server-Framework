@@ -175,18 +175,16 @@ std::string HttpResponse::to_string() const
     */
     try
     {
-        std::ostringstream response_stream;
-        response_stream << "HTTP/1.1 " << status_code << " " << status_message << "\r\n";
-
+        std::string response;
+        response += "HTTP/1.1 " + std::to_string(status_code) + " " + status_message + "\r\n";
+        response += "Content-Length: " + std::to_string(body.size()) + "\r\n";
         for (const auto &header : headers)
         {
-            response_stream << header.first << ": " << header.second << "\r\n";
+            response += header.first + ": " + header.second + "\r\n";
         }
-
-        response_stream << "\r\n"
-                        << body;
-
-        return response_stream.str();
+        response += "\r\n"; // End of headers
+        response += body;   // Body
+        return response;
     }
     catch (const std::exception &e)
     {
