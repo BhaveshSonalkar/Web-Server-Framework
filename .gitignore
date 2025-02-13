@@ -1,3 +1,4 @@
 .vscode/
 milestones.json
 build/
+.DS_Store
