@@ -6,8 +6,8 @@ void register_urls(Router &router)
 {
     spdlog::info("Registering URLs...");
 
-    router.register_route("GET", "/", home_view);
-    router.register_route("POST", "/submit", test_post_view);
+    router.register_route("GET", "/test_get", test_get);
+    router.register_route("POST", "/test_post", test_post);
 
     spdlog::info("URLs successfully registered");
 }

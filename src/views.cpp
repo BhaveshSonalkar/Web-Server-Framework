@@ -1,6 +1,6 @@
 #include "views.h"
 
-HttpResponse home_view(const HttpRequest &request)
+HttpResponse test_get(const HttpRequest &request)
 {
     HttpResponse response;
     auto params = request.params;
@@ -13,7 +13,7 @@ HttpResponse home_view(const HttpRequest &request)
     return response;
 }
 
-HttpResponse test_post_view(const HttpRequest &request)
+HttpResponse test_post(const HttpRequest &request)
 {
     try
     {
