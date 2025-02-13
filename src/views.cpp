@@ -18,7 +18,12 @@ HttpResponse test_post_view(const HttpRequest &request)
     try
     {
         HttpResponse response;
-        std::string name = request.json_body["name"];
+        std::string name = "";
+        auto data = request.json_body;
+        if (data.find("name") != data.end())
+        {
+            name = data["name"];
+        }
 
         response.status_code = 200;
         response.status_message = "OK";
