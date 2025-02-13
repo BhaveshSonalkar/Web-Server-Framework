@@ -45,38 +45,33 @@ void Server::setup_socket()
     spdlog::info("Server is listening on port {}", port);
 }
 
-void Server::client_connection_handler()
+void Server::client_connection_handler(int client_fd)
 {
-    struct sockaddr_in client_address;
-    socklen_t client_len = sizeof(client_address);
-
-    // accept an incoming connection
-    int client_fd = accept(server_fd, (struct sockaddr *)&client_address, &client_len);
-
-    if (client_fd < 0)
+    try
     {
-        spdlog::error("Error accepting connection: {}", strerror(errno));
-        return;
+        char buffer[BUFFER_SIZE] = {0};
+        read(client_fd, buffer, sizeof(buffer));
+
+        spdlog::info("Received request: {}", buffer);
+
+        // parse the request
+        HttpRequest request;
+        if (request.parse(buffer))
+        {
+            // route the request to the appropriate handler
+            HttpResponse response = router.route(request);
+
+            // send the response to the client
+            std::string response_str = response.to_string();
+            send(client_fd, response_str.c_str(), response_str.size(), 0);
+        }
+    }
+    catch (const std::exception &e)
+    {
+        spdlog::error("Error handling client connection: {}", e.what());
     }
 
-    spdlog::info("Connection accepted from {}", inet_ntoa(client_address.sin_addr));
-
-    char buffer[BUFFER_SIZE] = {0};
-    read(client_fd, buffer, sizeof(buffer));
-
-    spdlog::info("Received request: {}", buffer);
-
-    // parse the request
-    HttpRequest request;
-    if (request.parse(buffer))
-    {
-        // route the request to the appropriate handler
-        HttpResponse response = router.route(request);
-
-        // send the response to the client
-        std::string response_str = response.to_string();
-        send(client_fd, response_str.c_str(), response_str.size(), 0);
-    }
+    // close the connection
     close(client_fd);
 }
 
@@ -84,7 +79,17 @@ void Server::run()
 {
     while (true)
     {
-        client_connection_handler();
+        struct sockaddr_in client_address;
+        socklen_t client_len = sizeof(client_address);
+        int client_fd = accept(server_fd, (struct sockaddr *)&client_address, &client_len);
+        if (client_fd < 0)
+        {
+            spdlog::error("Error accepting connection: {}", strerror(errno));
+            continue;
+        }
+
+        spdlog::info("Connection accepted from {}", inet_ntoa(client_address.sin_addr));
+        worker_threads.emplace_back(&Server::client_connection_handler, this, client_fd);
     }
 }
 
@@ -102,4 +107,13 @@ Server::~Server()
         close(server_fd);
         spdlog::info("Server shut down");
     }
+    spdlog::info("Waiting for worker threads to finish");
+    for (std::thread &worker : worker_threads)
+    {
+        if (worker.joinable())
+        {
+            worker.join();
+        }
+    }
+    spdlog::info("All worker threads finished");
 }

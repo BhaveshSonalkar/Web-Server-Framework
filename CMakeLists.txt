@@ -22,7 +22,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(json)
 
-add_executable(webserver src/main.cpp src/server.cpp src/http_parser.cpp src/router.cpp src/urls.cpp src/views.cpp)
+add_executable(webserver src/main.cpp src/server.cpp src/http_parser.cpp src/router.cpp src/urls.cpp src/views.cpp src/logger.cpp)
 
 # Link spdlog
 target_link_libraries(webserver PRIVATE spdlog::spdlog)

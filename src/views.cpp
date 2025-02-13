@@ -1,4 +1,5 @@
 #include "views.h"
+#include <thread>
 
 HttpResponse test_get(const HttpRequest &request)
 {
@@ -11,6 +12,8 @@ HttpResponse test_get(const HttpRequest &request)
         {
             name = params.at("name");
         }
+        // add wait of 5 seconds
+        std::this_thread::sleep_for(std::chrono::seconds(1));
 
         response.status_code = 200;
         response.status_message = "OK";
