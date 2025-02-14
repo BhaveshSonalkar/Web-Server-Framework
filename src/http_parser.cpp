@@ -14,7 +14,7 @@ std::map<std::string, std::string> HttpRequest::parse_query_params(const std::st
 
     while (std::getline(query_stream, key, '=') && std::getline(query_stream, value, '&'))
     {
-        params[key] = value;
+        params[key] = sanitize_string(value);
     }
     return params;
 }
@@ -77,7 +77,7 @@ std::string HttpRequest::sanitize_string(const std::string &str)
 {
     /*
     This function trims whitespace from the beginning and end of a string
-    and returns the sanitized string.
+    and replaces %20 with a space in the string.
     */
     std::string sanitized_string;
     // Trim whitespace from the beginning and end
@@ -90,6 +90,13 @@ std::string HttpRequest::sanitize_string(const std::string &str)
     }
     sanitized_string = str.substr(start, end - start + 1);
 
+    // Replace %20 with a space
+    std::string::size_type pos = 0;
+    while ((pos = sanitized_string.find("%20", pos)) != std::string::npos)
+    {
+        sanitized_string.replace(pos, 3, " ");
+        pos += 1;
+    }
     return sanitized_string;
 }
 
