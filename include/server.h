@@ -4,10 +4,8 @@
 #include <string>
 #include <netinet/in.h> // for sockaddr_in
 #include <unistd.h>     // for close
-#include <thread>
-#include <vector>
-#include <mutex>
 #include "router.h"
+#include "thread_pool.h"
 
 class Server
 {
@@ -24,8 +22,7 @@ private:
     struct sockaddr_in address;
     int port;
     Router router;
-    std::vector<std::thread> worker_threads; // Holds worker threads
-    std::mutex connection_mutex;             // Protects shared resource
+    ThreadPool pool;
 
     // setup the server socket
     void setup_socket();

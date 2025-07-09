@@ -4,7 +4,7 @@
 #include <arpa/inet.h>
 #include <spdlog/spdlog.h>
 
-Server::Server(int port) : port(port), server_fd(-1) {}
+Server::Server(int port) : port(port), server_fd(-1), pool(std::thread::hardware_concurrency()) {}
 
 Router &Server::getRouter()
 {
@@ -97,7 +97,8 @@ void Server::run()
         }
 
         spdlog::info("Connection accepted from {}", inet_ntoa(client_address.sin_addr));
-        worker_threads.emplace_back(&Server::client_connection_handler, this, client_fd);
+        pool.enqueue([this, client_fd]
+                     { this->client_connection_handler(client_fd); });
     }
 }
 
@@ -115,13 +116,4 @@ Server::~Server()
         close(server_fd);
         spdlog::info("Server shut down");
     }
-    spdlog::info("Waiting for worker threads to finish");
-    for (std::thread &worker : worker_threads)
-    {
-        if (worker.joinable())
-        {
-            worker.join();
-        }
-    }
-    spdlog::info("All worker threads finished");
 }

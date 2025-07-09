@@ -22,10 +22,19 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(json)
 
-add_executable(webserver src/main.cpp src/server.cpp src/http_parser.cpp src/router.cpp src/urls.cpp src/views.cpp src/logger.cpp)
+set(SOURCE_FILES
+    src/main.cpp
+    src/server.cpp
+    src/http_parser.cpp
+    src/router.cpp
+    src/views.cpp
+    src/urls.cpp
+    src/logger.cpp
+    src/thread_pool.cpp
+)
 
-# Link spdlog
-target_link_libraries(webserver PRIVATE spdlog::spdlog)
+# Add source files to the executable
+add_executable(webserver ${SOURCE_FILES})
 
-# Link nlohmann/json
-target_link_libraries(webserver PRIVATE nlohmann_json::nlohmann_json)
+# Link libraries
+target_link_libraries(webserver PRIVATE spdlog::spdlog nlohmann_json::nlohmann_json)
